@@ -34,11 +34,30 @@
         <span class="status-pill danger" id="balance-indicator">Déséquilibré</span>
       </div>
       <form id="entry-form" autocomplete="off">
-        <div class="form-grid">
+        <div class="form-grid journal-form-grid">
           <label>Date<input type="date" id="entry-date" required></label>
           <label>Journal<input type="text" id="entry-code" value="OD" maxlength="8" required></label>
           <label>Référence<input type="text" id="entry-ref" placeholder="FAC-2026-001"></label>
-          <label>Libellé<input type="text" id="entry-label" placeholder="Libellé de la pièce" required></label>
+          <label class="label-choice">Libellé
+            <select id="entry-label-preset" required>
+              <option value="">Choisir un libellé</option>
+              <option value="Vente de prestations">Vente de prestations</option>
+              <option value="Vente de marchandises">Vente de marchandises</option>
+              <option value="Achat fournisseur">Achat fournisseur</option>
+              <option value="Frais bancaires">Frais bancaires</option>
+              <option value="Loyer professionnel">Loyer professionnel</option>
+              <option value="Abonnement logiciel">Abonnement logiciel</option>
+              <option value="Déplacement professionnel">Déplacement professionnel</option>
+              <option value="Règlement client">Règlement client</option>
+              <option value="Paiement fournisseur">Paiement fournisseur</option>
+              <option value="Salaire et charges sociales">Salaire et charges sociales</option>
+              <option value="custom">Autre libellé…</option>
+            </select>
+          </label>
+          <label class="label-custom is-hidden" id="entry-label-custom-wrap">Libellé personnalisé
+            <input type="text" id="entry-label-custom" placeholder="Écrivez le libellé souhaité">
+          </label>
+          <input type="hidden" id="entry-label" required>
           <label>TVA
             <select id="vat-mode">
               <option value="none">Aucune</option>
@@ -49,6 +68,15 @@
             </select>
           </label>
         </div>
+        <datalist id="line-label-options">
+          <option value="HT">
+          <option value="TVA">
+          <option value="TTC">
+          <option value="Règlement">
+          <option value="Contrepartie banque">
+          <option value="Charge déductible">
+          <option value="Produit imposable">
+        </datalist>
         <div class="table-scroll spreadsheet-wrap">
           <table class="spreadsheet" id="lines-table">
             <thead><tr><th>Compte</th><th>Libellé ligne</th><th>Débit</th><th>Crédit</th><th></th></tr></thead>

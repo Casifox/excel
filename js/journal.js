@@ -4,6 +4,9 @@ import { toast, confirmModal, money, dateFr, emptyState, table, escapeHtml, acco
 
 export function init() {
   document.getElementById("entry-date").valueAsDate = new Date();
+  document.getElementById("entry-label-preset").addEventListener("change", syncEntryLabel);
+  document.getElementById("entry-label-custom").addEventListener("input", syncEntryLabel);
+  syncEntryLabel();
   document.getElementById("new-entry").addEventListener("click", resetForm);
   document.getElementById("add-line").addEventListener("click", () => addLine());
   document.getElementById("apply-vat").addEventListener("click", applyVat);
@@ -17,7 +20,7 @@ export function init() {
 
 function addLine(data = {}) {
   const row = document.createElement("tr");
-  row.innerHTML = `<td><input class="account-input" list="account-list" value="${data.account || ""}" placeholder="706000" required><datalist id="account-list">${accountOptions()}</datalist><div class="account-hint"></div></td><td><input class="line-label" value="${escapeHtml(data.label || "")}" placeholder="Libellé"></td><td><input class="debit" value="${data.debit || ""}" placeholder="0"></td><td><input class="credit" value="${data.credit || ""}" placeholder="0"></td><td class="actions-cell"><button type="button" class="btn btn-danger">×</button></td>`;
+  row.innerHTML = `<td><input class="account-input" list="account-list" value="${data.account || ""}" placeholder="706000" required><datalist id="account-list">${accountOptions()}</datalist><div class="account-hint"></div></td><td><input class="line-label" list="line-label-options" value="${escapeHtml(data.label || "")}" placeholder="Libellé ou autre…"></td><td><input class="debit" value="${data.debit || ""}" placeholder="0"></td><td><input class="credit" value="${data.credit || ""}" placeholder="0"></td><td class="actions-cell"><button type="button" class="btn btn-danger">×</button></td>`;
   row.querySelectorAll("input").forEach(input => input.addEventListener("input", updateTotals));
   row.querySelector(".btn-danger").addEventListener("click", () => { row.remove(); updateTotals(); });
   document.getElementById("entry-lines").appendChild(row); updateTotals();
@@ -48,6 +51,7 @@ function applyVat() {
 
 function saveEntry(event) {
   event.preventDefault();
+  syncEntryLabel();
   try {
     addEntry(new JournalEntry({ date: document.getElementById("entry-date").value, journal: document.getElementById("entry-code").value, reference: document.getElementById("entry-ref").value, label: document.getElementById("entry-label").value, lines: readLines() }));
     toast("Écriture enregistrée"); resetForm(); renderJournal();
@@ -55,7 +59,18 @@ function saveEntry(event) {
 }
 
 function resetForm() {
-  document.getElementById("entry-form").reset(); document.getElementById("entry-date").valueAsDate = new Date(); document.getElementById("entry-code").value = "OD"; document.getElementById("entry-lines").innerHTML = ""; addLine(); addLine(); updateTotals();
+  document.getElementById("entry-form").reset(); document.getElementById("entry-date").valueAsDate = new Date(); document.getElementById("entry-code").value = "OD"; document.getElementById("entry-lines").innerHTML = ""; syncEntryLabel(); addLine(); addLine(); updateTotals();
+}
+
+function syncEntryLabel() {
+  const preset = document.getElementById("entry-label-preset");
+  const customWrap = document.getElementById("entry-label-custom-wrap");
+  const customInput = document.getElementById("entry-label-custom");
+  const hiddenLabel = document.getElementById("entry-label");
+  const isCustom = preset.value === "custom";
+  customWrap.classList.toggle("is-hidden", !isCustom);
+  customInput.required = isCustom;
+  hiddenLabel.value = isCustom ? customInput.value.trim() : preset.value;
 }
 
 function renderJournal() {
