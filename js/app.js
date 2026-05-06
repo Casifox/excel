@@ -296,13 +296,47 @@ function updateEntry(id, updates) {
 
 /**
  * Réinitialise toutes les données
+ * Système de double-clic pour confirmation
  */
+let resetClickCount = 0;
+let resetTimeout = null;
+
 function resetAllData() {
-  if (confirm('Êtes-vous sûr de vouloir supprimer toutes les données ? Cette action est irréversible.')) {
-    Storage.resetData();
-    AppData.entries = [];
-    initializeTestData();
-    location.reload();
+  // Incrémente le compteur de clics
+  resetClickCount++;
+  
+  // Annule le timeout précédent s'il existe
+  if (resetTimeout) {
+    clearTimeout(resetTimeout);
+  }
+  
+  // Si c'est le premier clic
+  if (resetClickCount === 1) {
+    Utils.showAlert('⚠️ Cliquez une seconde fois pour confirmer la suppression', 'warning');
+    
+    // Réinitialise le compteur après 3 secondes
+    resetTimeout = setTimeout(() => {
+      resetClickCount = 0;
+    }, 3000);
+  } 
+  // Si c'est le deuxième clic (confirmation)
+  else if (resetClickCount === 2) {
+    // Annule le timeout
+    if (resetTimeout) {
+      clearTimeout(resetTimeout);
+    }
+    
+    // Réinitialise le compteur
+    resetClickCount = 0;
+    
+    // Confirme une dernière fois avec confirm() natif
+    if (confirm('⚠️ ATTENTION !\n\nÊtes-vous ABSOLUMENT SÛR de vouloir supprimer TOUTES les données ?\n\nCette action est IRRÉVERSIBLE et va :\n- Supprimer toutes les écritures\n- Réinitialiser la balance\n- Vider le grand livre\n\nVoulez-vous vraiment continuer ?')) {
+      Storage.resetData();
+      AppData.entries = [];
+      initializeTestData();
+      Utils.showAlert('✅ Données réinitialisées avec succès', 'success');
+      setTimeout(() => location.reload(), 1000);
+    }
   }
 }
 
