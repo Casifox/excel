@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Dashboard comptable local pour TPE et indépendants.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <title>Dashboard · Compta SaaS</title>
+</head>
+<body data-page="dashboard">
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">∑</span><span>Compta SaaS</span></div>
+    <nav class="nav">
+      <a class="nav-link" data-page="dashboard" href="index.html">📊 Dashboard</a>
+      <a class="nav-link" data-page="journal" href="journal.html">🧾 Journal</a>
+      <a class="nav-link" data-page="grand-livre" href="grand-livre.html">📚 Grand livre</a>
+      <a class="nav-link" data-page="balance" href="balance.html">⚖️ Balance</a>
+      <a class="nav-link" data-page="resultat" href="resultat.html">📈 Résultat</a>
+      <a class="nav-link" data-page="bilan" href="bilan.html">🏛️ Bilan</a>
+    </nav>
+    <div class="sidebar-actions">
+      <button class="btn ghost" id="exportJson">Snapshot JSON</button><button class="btn ghost" id="exportCsv">Export CSV</button><label class="btn ghost file-btn">Import JSON<input type="file" id="importJson" accept="application/json"></label><button class="btn ghost" id="rollback">Rollback</button><button class="btn ghost" id="closePeriod">Clôture</button><button class="btn ghost" id="resetDb">Vider</button>
+    </div>
+  </aside>
+  <main class="content">
+    <header class="topbar"><div><h1>Dashboard</h1><p>Pilotage automatique du chiffre d’affaires, des charges et de la trésorerie.</p></div><div class="toolbar"><button class="btn" id="sidebarToggle">Menu</button><button class="btn" id="themeToggle">Thème</button><a class="btn primary" href="journal.html#new">Nouvelle écriture</a></div></header>
+    <section id="dashboardContent" class="grid">
+      <div class="grid cols-4">
+        <div class="card kpi"><span>Produits</span><strong id="kpiRevenue">0 €</strong></div>
+        <div class="card kpi"><span>Charges</span><strong id="kpiExpenses">0 €</strong></div>
+        <div class="card kpi"><span>Résultat</span><strong id="kpiResult">0 €</strong></div>
+        <div class="card kpi"><span>Trésorerie</span><strong id="kpiCash">0 €</strong></div>
+      </div>
+      <div class="card"><h2>Évolution CA / charges</h2><canvas class="chart" id="chartCanvas"></canvas></div>
+      <div class="card kpi"><span>Écart actif - passif</span><strong id="sheetGap">0 €</strong></div>
+    </section>
+  </main>
+</div>
+<script type="module" src="js/app.js"></script><script type="module" src="js/dashboard.js"></script>
+</body></html>
