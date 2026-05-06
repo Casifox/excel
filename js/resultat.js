@@ -1,311 +1,214 @@
 /**
  * ============================================
- * RESULTAT.JS - Compte de Résultat
+ * RESULTAT.JS - GESTION DU COMPTE DE RÉSULTAT
  * ============================================
- * Calcule et affiche le résultat (Produits - Charges)
+ * Calcul et affichage du résultat (Produits - Charges)
  */
 
 /**
- * Initialise la page du Compte de Résultat
+ * Initialise la page Résultat au chargement
  */
-function initResultat() {
-  console.log('Initialisation du Compte de Résultat...');
-  
-  // Génère les données du résultat
-  const resultatData = generateResultat();
-  
-  // Affiche le contenu
-  renderResultat(resultatData);
-  
-  // Dessine le graphique
-  drawChart(resultatData);
-}
-
-/**
- * Génère les données du compte de résultat
- * @returns {Object} - Les données du résultat
- */
-function generateResultat() {
-  // Sépare charges (classe 6) et produits (classe 7)
-  const charges = [];
-  const produits = [];
-  
-  AppData.entries.forEach(entry => {
-    const accountClass = entry.account.charAt(0);
-    
-    if (accountClass === '6') {
-      charges.push(entry);
-    } else if (accountClass === '7') {
-      produits.push(entry);
-    }
-  });
-  
-  // Calcule les totaux par compte pour les charges
-  const chargesByAccount = Utils.groupByAccount(charges);
-  const chargesDetails = Object.values(chargesByAccount).map(acc => ({
-    account: acc.account,
-    name: getAccountName(acc.account),
-    amount: acc.debit
-  }));
-  
-  // Calcule les totaux par compte pour les produits
-  const produitsByAccount = Utils.groupByAccount(produits);
-  const produitsDetails = Object.values(produitsByAccount).map(acc => ({
-    account: acc.account,
-    name: getAccountName(acc.account),
-    amount: acc.credit
-  }));
-  
-  // Trie par numéro de compte
-  chargesDetails.sort((a, b) => a.account.localeCompare(b.account));
-  produitsDetails.sort((a, b) => a.account.localeCompare(b.account));
-  
-  // Calcule les totaux
-  const totalCharges = chargesDetails.reduce((sum, item) => sum + item.amount, 0);
-  const totalProduits = produitsDetails.reduce((sum, item) => sum + item.amount, 0);
-  
-  // Calcule le résultat
-  const resultat = totalProduits - totalCharges;
-  const isBenefice = resultat >= 0;
-  
-  return {
-    charges: chargesDetails,
-    produits: produitsDetails,
-    totalCharges,
-    totalProduits,
-    resultat,
-    isBenefice
-  };
-}
-
-/**
- * Récupère le nom d'un compte à partir de son numéro
- * @param {string} account - Le numéro de compte
- * @returns {string} - Le nom du compte
- */
-function getAccountName(account) {
-  const accountNames = {
-    '604000': 'Achats de marchandises',
-    '613000': 'Locations immobilières',
-    '622000': 'Honoraires',
-    '641000': 'Rémunérations du personnel',
-    '445660': 'TVA déductible (charges)',
-    '431000': 'Charges sociales',
-    '707000': 'Ventes de marchandises',
-    '445710': 'TVA collectée (produits)'
-  };
-  
-  return accountNames[account] || 'Compte ' + account;
-}
-
-/**
- * Affiche le compte de résultat
- * @param {Object} resultatData - Les données du résultat
- */
-function renderResultat(resultatData) {
-  // Affiche les charges
-  renderCharges(resultatData.charges, resultatData.totalCharges);
-  
-  // Affiche les produits
-  renderProduits(resultatData.produits, resultatData.totalProduits);
-  
-  // Affiche le résultat
-  renderResultatFinal(resultatData.resultat, resultatData.isBenefice);
-}
-
-/**
- * Affiche la section des charges
- */
-function renderCharges(charges, totalCharges) {
-  const tbody = document.getElementById('charges-table-body');
-  if (!tbody) return;
-  
-  let html = '';
-  
-  charges.forEach(item => {
-    html += `
-      <tr>
-        <td><strong>${item.account}</strong></td>
-        <td>${item.name}</td>
-        <td class="text-right">${Utils.formatCurrency(item.amount)}</td>
-      </tr>
-    `;
-  });
-  
-  // Total charges
-  html += `
-    <tr class="total-row">
-      <td colspan="2" class="text-center"><strong>Total Charges</strong></td>
-      <td class="text-right"><strong>${Utils.formatCurrency(totalCharges)}</strong></td>
-    </tr>
-  `;
-  
-  tbody.innerHTML = html;
-  
-  if (charges.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="3" class="text-center" style="padding: 20px;">
-          <p style="color: #7f8c8d;">Aucune charge enregistrée</p>
-        </td>
-      </tr>
-    `;
-  }
-}
-
-/**
- * Affiche la section des produits
- */
-function renderProduits(produits, totalProduits) {
-  const tbody = document.getElementById('produits-table-body');
-  if (!tbody) return;
-  
-  let html = '';
-  
-  produits.forEach(item => {
-    html += `
-      <tr>
-        <td><strong>${item.account}</strong></td>
-        <td>${item.name}</td>
-        <td class="text-right">${Utils.formatCurrency(item.amount)}</td>
-      </tr>
-    `;
-  });
-  
-  // Total produits
-  html += `
-    <tr class="total-row">
-      <td colspan="2" class="text-center"><strong>Total Produits</strong></td>
-      <td class="text-right"><strong>${Utils.formatCurrency(totalProduits)}</strong></td>
-    </tr>
-  `;
-  
-  tbody.innerHTML = html;
-  
-  if (produits.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="3" class="text-center" style="padding: 20px;">
-          <p style="color: #7f8c8d;">Aucun produit enregistré</p>
-        </td>
-      </tr>
-    `;
-  }
-}
-
-/**
- * Affiche le résultat final
- */
-function renderResultatFinal(resultat, isBenefice) {
-  const resultatEl = document.getElementById('resultat-final');
-  const resultatLabelEl = document.getElementById('resultat-label');
-  
-  if (resultatEl) {
-    resultatEl.textContent = Utils.formatCurrency(Math.abs(resultat));
-    resultatEl.className = isBenefice ? 'stat-value text-success' : 'stat-value text-danger';
-  }
-  
-  if (resultatLabelEl) {
-    resultatLabelEl.textContent = isBenefice ? 'BÉNÉFICE' : 'PERTE';
-    resultatLabelEl.className = isBenefice ? 'stat-label text-success' : 'stat-label text-danger';
-  }
-}
-
-/**
- * Dessine le graphique charges/produits
- */
-function drawChart(resultatData) {
-  const canvas = document.getElementById('resultat-chart');
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext('2d');
-  
-  // Dimensions
-  const width = canvas.width;
-  const height = canvas.height;
-  const padding = 60;
-  const chartWidth = width - 2 * padding;
-  const chartHeight = height - 2 * padding;
-  
-  // Efface le canvas
-  ctx.clearRect(0, 0, width, height);
-  
-  const totalCharges = resultatData.totalCharges;
-  const totalProduits = resultatData.totalProduits;
-  const maxVal = Math.max(totalCharges, totalProduits, 1);
-  
-  // Largeur des barres
-  const barWidth = Math.min(100, chartWidth / 3);
-  const gap = (chartWidth - 2 * barWidth) / 3;
-  
-  // Position X des barres
-  const chargesX = padding + gap;
-  const produitsX = chargesX + barWidth + gap;
-  
-  // Hauteur des barres
-  const chargesHeight = (totalCharges / maxVal) * chartHeight;
-  const produitsHeight = (totalProduits / maxVal) * chartHeight;
-  
-  // Dessine la barre des charges (rouge)
-  const chargesY = padding + chartHeight - chargesHeight;
-  
-  // Gradient pour charges
-  const chargesGradient = ctx.createLinearGradient(0, chargesY, 0, padding + chartHeight);
-  chargesGradient.addColorStop(0, '#e74c3c');
-  chargesGradient.addColorStop(1, '#c0392b');
-  
-  ctx.fillStyle = chargesGradient;
-  ctx.fillRect(chargesX, chargesY, barWidth, chargesHeight);
-  
-  // Dessine la barre des produits (vert)
-  const produitsY = padding + chartHeight - produitsHeight;
-  
-  // Gradient pour produits
-  const produitsGradient = ctx.createLinearGradient(0, produitsY, 0, padding + chartHeight);
-  produitsGradient.addColorStop(0, '#27ae60');
-  produitsGradient.addColorStop(1, '#229954');
-  
-  ctx.fillStyle = produitsGradient;
-  ctx.fillRect(produitsX, produitsY, barWidth, produitsHeight);
-  
-  // Dessine les labels
-  ctx.fillStyle = '#2c3e50';
-  ctx.font = 'bold 14px Segoe UI';
-  ctx.textAlign = 'center';
-  
-  // Label Charges
-  ctx.fillText('CHARGES', chargesX + barWidth / 2, padding + chartHeight + 25);
-  ctx.fillText(Utils.formatCurrency(totalCharges), chargesX + barWidth / 2, padding + chartHeight + 45);
-  
-  // Label Produits
-  ctx.fillText('PRODUITS', produitsX + barWidth / 2, padding + chartHeight + 25);
-  ctx.fillText(Utils.formatCurrency(totalProduits), produitsX + barWidth / 2, padding + chartHeight + 45);
-  
-  // Titre
-  ctx.font = 'bold 16px Segoe UI';
-  ctx.textAlign = 'center';
-  ctx.fillText('Comparaison Charges / Produits', width / 2, 25);
-  
-  // Ligne de référence (max)
-  ctx.strokeStyle = '#bdc3c7';
-  ctx.setLineDash([5, 5]);
-  ctx.beginPath();
-  ctx.moveTo(padding, padding);
-  ctx.lineTo(width - padding, padding);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  
-  // Label axe Y
-  ctx.fillStyle = '#7f8c8d';
-  ctx.font = '12px Segoe UI';
-  ctx.textAlign = 'right';
-  ctx.fillText(Utils.formatCurrency(maxVal), padding - 5, padding + 5);
-  ctx.fillText('0', padding - 5, padding + chartHeight + 5);
-}
-
-// Initialise la page quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', function() {
-  if (window.location.pathname.includes('resultat.html')) {
-    initResultat();
-  }
+    renderResultat();
 });
+
+/**
+ * Calcule et affiche le compte de résultat
+ */
+function renderResultat() {
+    const entries = Storage.loadData();
+    const chargesTbody = document.getElementById('charges-tbody');
+    const produitsTbody = document.getElementById('produits-tbody');
+    const emptyMessage = document.getElementById('empty-message');
+    
+    if (!chargesTbody || !produitsTbody) return;
+    
+    // Si aucune donnée
+    if (entries.length === 0) {
+        emptyMessage?.classList.remove('hidden');
+        document.querySelector('.bilan-section')?.classList.add('hidden');
+        document.querySelector('.table-container.mt-3')?.classList.add('hidden');
+        return;
+    }
+    
+    emptyMessage?.classList.add('hidden');
+    document.querySelector('.bilan-section')?.classList.remove('hidden');
+    document.querySelector('.table-container.mt-3')?.classList.remove('hidden');
+    
+    // Séparer charges (classe 6) et produits (classe 7)
+    const charges = {};
+    const produits = {};
+    
+    entries.forEach(entry => {
+        const accountCode = entry.account.toString();
+        const firstDigit = accountCode.charAt(0);
+        const amount = (parseFloat(entry.debit) || 0) + (parseFloat(entry.credit) || 0);
+        
+        if (firstDigit === '6') {
+            // Charge - on prend le débit
+            const chargeAmount = parseFloat(entry.debit) || 0;
+            if (chargeAmount > 0) {
+                if (!charges[accountCode]) {
+                    charges[accountCode] = {
+                        code: accountCode,
+                        label: entry.label || 'Charge ' + accountCode,
+                        total: 0
+                    };
+                }
+                charges[accountCode].total += chargeAmount;
+                if (entry.label && entry.label !== 'Charge ' + accountCode) {
+                    charges[accountCode].label = entry.label;
+                }
+            }
+        } else if (firstDigit === '7') {
+            // Produit - on prend le crédit
+            const produitAmount = parseFloat(entry.credit) || 0;
+            if (produitAmount > 0) {
+                if (!produits[accountCode]) {
+                    produits[accountCode] = {
+                        code: accountCode,
+                        label: entry.label || 'Produit ' + accountCode,
+                        total: 0
+                    };
+                }
+                produits[accountCode].total += produitAmount;
+                if (entry.label && entry.label !== 'Produit ' + accountCode) {
+                    produits[accountCode].label = entry.label;
+                }
+            }
+        }
+    });
+    
+    // Trier par code
+    const sortedCharges = Object.values(charges).sort((a, b) => a.code.localeCompare(b.code));
+    const sortedProduits = Object.values(produits).sort((a, b) => a.code.localeCompare(b.code));
+    
+    // Calculer les totaux
+    const totalCharges = sortedCharges.reduce((sum, c) => sum + c.total, 0);
+    const totalProduits = sortedProduits.reduce((sum, p) => sum + p.total, 0);
+    const resultatNet = totalProduits - totalCharges;
+    
+    // Afficher les charges
+    if (sortedCharges.length === 0) {
+        chargesTbody.innerHTML = '<tr><td colspan="3" class="text-center">Aucune charge</td></tr>';
+    } else {
+        chargesTbody.innerHTML = sortedCharges.map(charge => `
+            <tr>
+                <td>${charge.code}</td>
+                <td>${charge.label}</td>
+                <td class="amount-cell negative">${Utils.formatCurrency(charge.total)}</td>
+            </tr>
+        `).join('');
+    }
+    
+    // Afficher les produits
+    if (sortedProduits.length === 0) {
+        produitsTbody.innerHTML = '<tr><td colspan="3" class="text-center">Aucun produit</td></tr>';
+    } else {
+        produitsTbody.innerHTML = sortedProduits.map(produit => `
+            <tr>
+                <td>${produit.code}</td>
+                <td>${produit.label}</td>
+                <td class="amount-cell positive">${Utils.formatCurrency(produit.total)}</td>
+            </tr>
+        `).join('');
+    }
+    
+    // Mettre à jour les totaux
+    document.getElementById('total-charges').textContent = Utils.formatCurrency(totalCharges);
+    document.getElementById('total-produits').textContent = Utils.formatCurrency(totalProduits);
+    document.getElementById('resultat-charges').textContent = Utils.formatCurrency(totalCharges);
+    document.getElementById('resultat-produits').textContent = Utils.formatCurrency(totalProduits);
+    
+    // Afficher le résultat net
+    const resultatNetEl = document.getElementById('resultat-net');
+    resultatNetEl.textContent = Utils.formatCurrency(resultatNet);
+    resultatNetEl.className = `amount-cell ${resultatNet >= 0 ? 'positive' : 'negative'}`;
+    
+    // Dessiner le graphique
+    drawChart(totalCharges, totalProduits, resultatNet);
+}
+
+/**
+ * Dessine un graphique simple avec Canvas
+ * @param {number} charges - Total des charges
+ * @param {number} produits - Total des produits
+ * @param {number} resultat - Résultat net
+ */
+function drawChart(charges, produits, resultat) {
+    const canvas = document.getElementById('chart-resultat');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Ajuster la taille du canvas
+    const container = canvas.parentElement;
+    canvas.width = container.clientWidth - 48;
+    canvas.height = 300;
+    
+    const width = canvas.width;
+    const height = canvas.height;
+    const padding = 60;
+    
+    // Effacer le canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Si pas de données
+    if (charges === 0 && produits === 0) {
+        ctx.fillStyle = '#7f8c8d';
+        ctx.font = '16px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText('Aucune donnée à afficher', width / 2, height / 2);
+        return;
+    }
+    
+    // Trouver la valeur maximale pour l'échelle
+    const maxValue = Math.max(charges, produits, Math.abs(resultat)) * 1.2;
+    
+    // Dessiner les barres
+    const barWidth = 80;
+    const gap = 40;
+    const totalBarsWidth = (barWidth * 3) + (gap * 2);
+    const startX = (width - totalBarsWidth) / 2 + barWidth / 2;
+    
+    const chartHeight = height - (padding * 2);
+    
+    // Fonction pour dessiner une barre
+    function drawBar(x, value, color, label) {
+        const barHeight = maxValue > 0 ? (value / maxValue) * chartHeight : 0;
+        const y = height - padding - barHeight;
+        
+        // Barre
+        ctx.fillStyle = color;
+        ctx.fillRect(x - barWidth / 2, y, barWidth, barHeight);
+        
+        // Valeur
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = 'bold 14px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText(Utils.formatCurrency(value), x, y - 10);
+        
+        // Label
+        ctx.font = '12px Segoe UI';
+        ctx.fillText(label, x, height - padding + 20);
+    }
+    
+    // Dessiner Charges (rouge)
+    drawBar(startX, charges, '#e74c3c', 'Charges');
+    
+    // Dessiner Produits (vert)
+    drawBar(startX + barWidth + gap, produits, '#27ae60', 'Produits');
+    
+    // Dessiner Résultat (bleu ou orange si négatif)
+    const resultatColor = resultat >= 0 ? '#3498db' : '#f39c12';
+    const resultatLabel = resultat >= 0 ? 'Bénéfice' : 'Perte';
+    drawBar(startX + (barWidth + gap) * 2, Math.abs(resultat), resultatColor, resultatLabel);
+    
+    // Ligne de base
+    ctx.strokeStyle = '#bdc3c7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(padding, height - padding);
+    ctx.lineTo(width - padding, height - padding);
+    ctx.stroke();
+}

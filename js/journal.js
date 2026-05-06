@@ -1,336 +1,395 @@
 /**
  * ============================================
- * JOURNAL.JS - Gestion du journal comptable
+ * JOURNAL.JS - GESTION DU JOURNAL COMPTABLE
  * ============================================
- * Page de saisie des écritures comptables
+ * Gestion complète du tableau des écritures comptables
  */
 
-let currentEntries = [];
+// Variables globales
+let journalEntries = [];
 let filteredEntries = [];
 
 /**
- * Initialise la page du journal
+ * Initialise la page Journal au chargement
  */
-function initJournal() {
-  console.log('Initialisation du journal...');
-  
-  // Charge les entrées
-  currentEntries = [...AppData.entries];
-  filteredEntries = [...currentEntries];
-  
-  // Affiche le tableau
-  renderJournalTable();
-  
-  // Configure les écouteurs d'événements
-  setupEventListeners();
-  
-  // Met à jour les totaux
-  updateTotals();
+document.addEventListener('DOMContentLoaded', function() {
+    // Charger les données
+    loadJournalData();
+    
+    // Initialiser les écouteurs d'événements
+    initEventListeners();
+    
+    // Afficher le tableau
+    renderJournal();
+});
+
+/**
+ * Charge les données depuis le localStorage
+ */
+function loadJournalData() {
+    journalEntries = Storage.loadData();
+    filteredEntries = [...journalEntries];
 }
 
 /**
- * Configure les écouteurs d'événements
+ * Sauvegarde les données dans le localStorage
  */
-function setupEventListeners() {
-  // Bouton ajouter ligne
-  const btnAddLine = document.getElementById('btn-add-line');
-  if (btnAddLine) {
-    btnAddLine.addEventListener('click', addNewLine);
-  }
-  
-  // Bouton exporter CSV
-  const btnExportCSV = document.getElementById('btn-export-csv');
-  if (btnExportCSV) {
-    btnExportCSV.addEventListener('click', () => {
-      Utils.exportToCSV(filteredEntries, 'journal_compta.csv');
+function saveJournalData() {
+    Storage.saveData(journalEntries);
+    updateBalanceAlert();
+}
+
+/**
+ * Initialise tous les écouteurs d'événements
+ */
+function initEventListeners() {
+    // Bouton ajouter ligne
+    document.getElementById('btn-add-row')?.addEventListener('click', addNewRow);
+    
+    // Export CSV
+    document.getElementById('btn-export-csv')?.addEventListener('click', () => {
+        Utils.exportToCSV(journalEntries, 'journal_comptable.csv');
     });
-  }
-  
-  // Bouton réinitialiser
-  const btnReset = document.getElementById('btn-reset-data');
-  if (btnReset) {
-    btnReset.addEventListener('click', resetAllData);
-  }
-  
-  // Recherche
-  const searchInput = document.getElementById('search-input');
-  if (searchInput) {
-    searchInput.addEventListener('input', handleSearch);
-  }
-  
-  // Filtre date début
-  const dateStart = document.getElementById('date-start');
-  if (dateStart) {
-    dateStart.addEventListener('change', handleDateFilter);
-  }
-  
-  // Filtre date fin
-  const dateEnd = document.getElementById('date-end');
-  if (dateEnd) {
-    dateEnd.addEventListener('change', handleDateFilter);
-  }
-  
-  // Délégation d'événements pour le tableau
-  const journalTableBody = document.getElementById('journal-table-body');
-  if (journalTableBody) {
-    journalTableBody.addEventListener('click', handleTableClick);
-    journalTableBody.addEventListener('blur', handleCellBlur, true);
-    journalTableBody.addEventListener('keypress', handleCellKeypress, true);
-  }
-}
-
-/**
- * Affiche le tableau du journal
- */
-function renderJournalTable() {
-  const tbody = document.getElementById('journal-table-body');
-  if (!tbody) return;
-  
-  // Trie par date
-  const sortedEntries = Utils.sortByDate(filteredEntries);
-  
-  let html = '';
-  
-  sortedEntries.forEach(entry => {
-    html += `
-      <tr data-id="${entry.id}">
-        <td class="editable-cell" data-field="date">
-          <input type="date" value="${entry.date}" />
-        </td>
-        <td class="editable-cell" data-field="journal">
-          <select value="${entry.journal}">
-            <option value="ACH" ${entry.journal === 'ACH' ? 'selected' : ''}>ACH</option>
-            <option value="VEN" ${entry.journal === 'VEN' ? 'selected' : ''}>VEN</option>
-            <option value="BAN" ${entry.journal === 'BAN' ? 'selected' : ''}>BAN</option>
-            <option value="CAI" ${entry.journal === 'CAI' ? 'selected' : ''}>CAI</option>
-            <option value="OD" ${entry.journal === 'OD' ? 'selected' : ''}>OD</option>
-          </select>
-        </td>
-        <td class="editable-cell" data-field="account">
-          <input type="text" value="${entry.account}" placeholder="N° compte" />
-        </td>
-        <td class="editable-cell" data-field="label">
-          <input type="text" value="${entry.label}" placeholder="Libellé" />
-        </td>
-        <td class="editable-cell text-right" data-field="debit">
-          <input type="number" step="0.01" min="0" value="${entry.debit.toFixed(2)}" />
-        </td>
-        <td class="editable-cell text-right" data-field="credit">
-          <input type="number" step="0.01" min="0" value="${entry.credit.toFixed(2)}" />
-        </td>
-        <td class="text-center">
-          <button class="btn btn-danger btn-sm btn-delete" data-id="${entry.id}">
-            🗑️
-          </button>
-        </td>
-      </tr>
-    `;
-  });
-  
-  tbody.innerHTML = html;
-  
-  // Si aucune entrée
-  if (sortedEntries.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7" class="text-center" style="padding: 40px;">
-          <p style="color: #7f8c8d; font-size: 1.1rem;">Aucune écriture dans le journal</p>
-          <p style="color: #95a5a6; margin-top: 10px;">Cliquez sur "Ajouter une ligne" pour commencer</p>
-        </td>
-      </tr>
-    `;
-  }
-}
-
-/**
- * Ajoute une nouvelle ligne vide
- */
-function addNewLine() {
-  const today = new Date().toISOString().split('T')[0];
-  
-  const newEntry = {
-    id: Utils.generateId(),
-    date: today,
-    journal: 'OD',
-    account: '',
-    label: '',
-    debit: 0,
-    credit: 0
-  };
-  
-  AppData.entries.push(newEntry);
-  saveAllData();
-  
-  // Rafraîchit l'affichage
-  currentEntries = [...AppData.entries];
-  applyFilters();
-  renderJournalTable();
-  updateTotals();
-  
-  Utils.showAlert('Ligne ajoutée avec succès');
-}
-
-/**
- * Gère les clics dans le tableau
- */
-function handleTableClick(event) {
-  // Bouton supprimer
-  if (event.target.classList.contains('btn-delete')) {
-    const id = event.target.getAttribute('data-id');
-    deleteEntryById(id);
-  }
-}
-
-/**
- * Supprime une entrée par son ID
- */
-function deleteEntryById(id) {
-  if (confirm('Voulez-vous vraiment supprimer cette écriture ?')) {
-    deleteEntry(id);
-    currentEntries = [...AppData.entries];
-    applyFilters();
-    renderJournalTable();
-    updateTotals();
-    Utils.showAlert('Écriture supprimée', 'warning');
-  }
-}
-
-/**
- * Gère la perte de focus sur une cellule
- */
-function handleCellBlur(event) {
-  if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT') {
-    const cell = event.target.closest('.editable-cell');
-    const row = event.target.closest('tr');
     
-    if (!cell || !row) return;
+    // Import JSON
+    document.getElementById('import-json')?.addEventListener('change', handleImportJSON);
     
-    const field = cell.getAttribute('data-field');
-    const id = row.getAttribute('data-id');
-    const value = event.target.value;
+    // Recherche
+    document.getElementById('search-input')?.addEventListener('input', applyFilters);
     
-    // Met à jour l'entrée
-    updateEntryField(id, field, value);
-  }
+    // Filtres date
+    document.getElementById('date-from')?.addEventListener('change', applyFilters);
+    document.getElementById('date-to')?.addEventListener('change', applyFilters);
+    
+    // Filtre journal
+    document.getElementById('journal-filter')?.addEventListener('change', applyFilters);
+    
+    // Bouton effacer filtres
+    document.getElementById('btn-clear-filters')?.addEventListener('click', clearFilters);
 }
 
 /**
- * Gère la touche Entrée dans les cellules
- */
-function handleCellKeypress(event) {
-  if (event.key === 'Enter') {
-    event.target.blur();
-  }
-}
-
-/**
- * Met à jour un champ d'une entrée
- */
-function updateEntryField(id, field, value) {
-  const index = AppData.entries.findIndex(e => e.id === id);
-  if (index === -1) return;
-  
-  let parsedValue = value;
-  
-  // Parse les nombres pour débit/crédit
-  if (field === 'debit' || field === 'credit') {
-    parsedValue = parseFloat(value) || 0;
-  }
-  
-  AppData.entries[index][field] = parsedValue;
-  saveAllData();
-  
-  // Met à jour les totaux
-  updateTotals();
-}
-
-/**
- * Gère la recherche
- */
-function handleSearch(event) {
-  const query = event.target.value;
-  filteredEntries = Utils.search(currentEntries, query);
-  applyDateFilter();
-  renderJournalTable();
-}
-
-/**
- * Gère le filtre par date
- */
-function handleDateFilter() {
-  applyFilters();
-  renderJournalTable();
-}
-
-/**
- * Applique tous les filtres
+ * Applique les filtres de recherche
  */
 function applyFilters() {
-  let result = [...currentEntries];
-  
-  // Filtre recherche
-  const searchInput = document.getElementById('search-input');
-  if (searchInput && searchInput.value) {
-    result = Utils.search(result, searchInput.value);
-  }
-  
-  // Filtre date
-  applyDateFilter(result);
+    const searchInput = document.getElementById('search-input')?.value || '';
+    const dateFrom = document.getElementById('date-from')?.value || '';
+    const dateTo = document.getElementById('date-to')?.value || '';
+    const journalFilter = document.getElementById('journal-filter')?.value || '';
+    
+    const filters = {
+        search: searchInput,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        journal: journalFilter
+    };
+    
+    filteredEntries = filterEntries(journalEntries, filters);
+    renderJournal();
 }
 
 /**
- * Applique le filtre par date
+ * Efface tous les filtres
  */
-function applyDateFilter(entries = currentEntries) {
-  const dateStart = document.getElementById('date-start');
-  const dateEnd = document.getElementById('date-end');
-  
-  if (dateStart || dateEnd) {
-    filteredEntries = Utils.filterByDate(
-      entries,
-      dateStart ? dateStart.value : null,
-      dateEnd ? dateEnd.value : null
-    );
-  } else {
-    filteredEntries = entries;
-  }
+function clearFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('date-from').value = '';
+    document.getElementById('date-to').value = '';
+    document.getElementById('journal-filter').value = '';
+    filteredEntries = [...journalEntries];
+    renderJournal();
 }
 
 /**
- * Met à jour les totaux
+ * Ajoute une nouvelle ligne vide au journal
  */
-function updateTotals() {
-  const balance = Utils.checkBalance(filteredEntries);
-  
-  const totalDebitEl = document.getElementById('total-debit');
-  const totalCreditEl = document.getElementById('total-credit');
-  const balanceStatusEl = document.getElementById('balance-status');
-  const entryCountEl = document.getElementById('entry-count');
-  
-  if (totalDebitEl) {
-    totalDebitEl.textContent = Utils.formatCurrency(balance.totalDebit);
-  }
-  
-  if (totalCreditEl) {
-    totalCreditEl.textContent = Utils.formatCurrency(balance.totalCredit);
-  }
-  
-  if (balanceStatusEl) {
-    if (balance.balanced) {
-      balanceStatusEl.innerHTML = '<span class="text-success">✓ Journal équilibré</span>';
-    } else {
-      balanceStatusEl.innerHTML = `<span class="text-danger">✗ Déséquilibre: ${Utils.formatCurrency(balance.difference)}</span>`;
+function addNewRow() {
+    const today = new Date();
+    const formattedDate = Utils.formatDate(today.toISOString());
+    
+    const newRow = {
+        id: Utils.generateId(),
+        date: formattedDate,
+        journal: 'ACH',
+        account: '',
+        label: '',
+        debit: 0,
+        credit: 0
+    };
+    
+    journalEntries.push(newRow);
+    filteredEntries = [...journalEntries];
+    saveJournalData();
+    renderJournal();
+    
+    // Scroll vers le bas
+    const tableBody = document.getElementById('journal-tbody');
+    tableBody.scrollTop = tableBody.scrollHeight;
+}
+
+/**
+ * Supprime une ligne du journal
+ * @param {string} id - ID de l'entrée à supprimer
+ */
+function deleteEntry(id) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette écriture ?')) {
+        journalEntries = journalEntries.filter(entry => entry.id !== id);
+        filteredEntries = [...journalEntries];
+        saveJournalData();
+        renderJournal();
     }
-  }
-  
-  if (entryCountEl) {
-    entryCountEl.textContent = filteredEntries.length;
-  }
 }
 
-// Initialise la page quand le DOM est chargé
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.location.pathname.includes('journal.html')) {
-    initJournal();
-  }
-});
+/**
+ * Met à jour une entrée du journal
+ * @param {string} id - ID de l'entrée
+ * @param {string} field - Champ à modifier
+ * @param {any} value - Nouvelle valeur
+ */
+function updateEntry(id, field, value) {
+    const entry = journalEntries.find(e => e.id === id);
+    if (entry) {
+        if (field === 'debit' || field === 'credit') {
+            // Nettoyer et convertir la valeur numérique
+            const cleanValue = value.replace(/[^0-9.,]/g, '').replace(',', '.');
+            entry[field] = parseFloat(cleanValue) || 0;
+        } else {
+            entry[field] = value;
+        }
+        saveJournalData();
+        renderJournal(false); // Ne pas recharger complètement pour garder le focus
+    }
+}
+
+/**
+ * Affiche le journal dans le tableau HTML
+ * @param {boolean} fullRender - Si true, rendu complet, sinon partiel
+ */
+function renderJournal(fullRender = true) {
+    const tbody = document.getElementById('journal-tbody');
+    const tfoot = document.getElementById('journal-tfoot');
+    const emptyMessage = document.getElementById('empty-message');
+    const tableContainer = document.querySelector('.journal-table-container');
+    
+    if (!tbody) return;
+    
+    // Gérer l'affichage du message "vide"
+    if (journalEntries.length === 0) {
+        emptyMessage?.classList.remove('hidden');
+        tableContainer?.classList.add('hidden');
+    } else {
+        emptyMessage?.classList.add('hidden');
+        tableContainer?.classList.remove('hidden');
+    }
+    
+    // Rendu complet ou partiel
+    if (fullRender) {
+        tbody.innerHTML = filteredEntries.map(entry => createRowHTML(entry)).join('');
+        
+        // Ajouter les écouteurs pour l'édition inline
+        addInlineEditListeners();
+    }
+    
+    // Calculer et afficher les totaux
+    renderTotals();
+    
+    // Mettre à jour l'alerte d'équilibre
+    updateBalanceAlert();
+}
+
+/**
+ * Crée le HTML pour une ligne du journal
+ * @param {Object} entry - Entrée comptable
+ * @returns {string} - HTML de la ligne
+ */
+function createRowHTML(entry) {
+    return `
+        <tr data-id="${entry.id}">
+            <td class="editable-cell" data-field="date">${entry.date}</td>
+            <td class="editable-cell" data-field="journal">${entry.journal}</td>
+            <td class="editable-cell" data-field="account">${entry.account}</td>
+            <td class="editable-cell" data-field="label">${entry.label}</td>
+            <td class="editable-cell amount-cell" data-field="debit">${Utils.formatCurrency(entry.debit)}</td>
+            <td class="editable-cell amount-cell" data-field="credit">${Utils.formatCurrency(entry.credit)}</td>
+            <td>
+                <button class="btn btn-danger btn-small btn-delete" title="Supprimer">🗑️</button>
+            </td>
+        </tr>
+    `;
+}
+
+/**
+ * Ajoute les écouteurs pour l'édition inline des cellules
+ */
+function addInlineEditListeners() {
+    const editableCells = document.querySelectorAll('.editable-cell');
+    
+    editableCells.forEach(cell => {
+        cell.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const id = row.dataset.id;
+            const field = this.dataset.field;
+            const currentValue = this.textContent.trim();
+            
+            // Créer un input pour l'édition
+            let input;
+            if (field === 'date') {
+                input = document.createElement('input');
+                input.type = 'date';
+                // Convertir JJ/MM/AAAA en YYYY-MM-DD
+                const parts = currentValue.split('/');
+                if (parts.length === 3) {
+                    input.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            } else if (field === 'journal') {
+                input = document.createElement('select');
+                input.innerHTML = `
+                    <option value="ACH" ${currentValue === 'ACH' ? 'selected' : ''}>ACH</option>
+                    <option value="VEN" ${currentValue === 'VEN' ? 'selected' : ''}>VEN</option>
+                    <option value="BAN" ${currentValue === 'BAN' ? 'selected' : ''}>BAN</option>
+                    <option value="CAI" ${currentValue === 'CAI' ? 'selected' : ''}>CAI</option>
+                `;
+            } else if (field === 'debit' || field === 'credit') {
+                input = document.createElement('input');
+                input.type = 'number';
+                input.step = '0.01';
+                input.min = '0';
+                input.value = parseFloat(currentValue.replace(/[^0-9.]/g, '')) || 0;
+                input.style.textAlign = 'right';
+            } else {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentValue;
+            }
+            
+            // Remplacer le contenu par l'input
+            this.innerHTML = '';
+            this.appendChild(input);
+            input.focus();
+            
+            // Sélectionner tout le texte pour les inputs text
+            if (input.type === 'text') {
+                input.select();
+            }
+            
+            // Sauvegarder lors de la perte de focus
+            input.addEventListener('blur', function() {
+                updateEntry(id, field, this.value);
+            });
+            
+            // Sauvegarder avec Entrée
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    this.blur();
+                }
+            });
+            
+            // Annuler avec Échap
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    renderJournal();
+                }
+            });
+        });
+    });
+    
+    // Boutons de suppression
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const id = row.dataset.id;
+            deleteEntry(id);
+        });
+    });
+}
+
+/**
+ * Affiche les totaux dans le footer du tableau
+ */
+function renderTotals() {
+    const tfoot = document.getElementById('journal-tfoot');
+    if (!tfoot) return;
+    
+    const totalDebit = Utils.calculateTotalDebit(filteredEntries);
+    const totalCredit = Utils.calculateTotalCredit(filteredEntries);
+    const difference = totalDebit - totalCredit;
+    
+    const diffClass = Math.abs(difference) < 0.01 ? 'positive' : 'negative';
+    const diffText = difference >= 0 ? '+' : '-';
+    
+    tfoot.innerHTML = `
+        <tr class="balance-row">
+            <td colspan="4" class="text-right"><strong>TOTAUX</strong></td>
+            <td class="amount-cell"><strong>${Utils.formatCurrency(totalDebit)}</strong></td>
+            <td class="amount-cell"><strong>${Utils.formatCurrency(totalCredit)}</strong></td>
+            <td></td>
+        </tr>
+        <tr class="${Math.abs(difference) < 0.01 ? '' : 'negative'}">
+            <td colspan="4" class="text-right">Écart:</td>
+            <td colspan="2" class="amount-cell ${diffClass}"><strong>${diffText}${Utils.formatCurrency(Math.abs(difference))}</strong></td>
+            <td></td>
+        </tr>
+    `;
+}
+
+/**
+ * Met à jour l'alerte d'équilibre du journal
+ */
+function updateBalanceAlert() {
+    const alertDiv = document.getElementById('balance-alert');
+    if (!alertDiv) return;
+    
+    const totalDebit = Utils.calculateTotalDebit(journalEntries);
+    const totalCredit = Utils.calculateTotalCredit(journalEntries);
+    const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
+    
+    if (journalEntries.length === 0) {
+        alertDiv.classList.add('hidden');
+        return;
+    }
+    
+    alertDiv.classList.remove('hidden');
+    
+    if (isBalanced) {
+        alertDiv.className = 'alert alert-success';
+        alertDiv.innerHTML = '✅ <strong>Journal équilibré !</strong> Débit = Crédit = ' + Utils.formatCurrency(totalDebit);
+    } else {
+        const difference = Math.abs(totalDebit - totalCredit);
+        alertDiv.className = 'alert alert-error';
+        alertDiv.innerHTML = '❌ <strong>Journal déséquilibré !</strong> Écart de ' + Utils.formatCurrency(difference);
+    }
+}
+
+/**
+ * Gère l'import d'un fichier JSON
+ * @param {Event} event - Événement change
+ */
+async function handleImportJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+        const importedData = await Utils.importFromJSON(file);
+        
+        if (confirm(`Importer ${importedData.length} écritures ?\n\nCela va AJOUTER les données importées aux données existantes.`)) {
+            // Ajouter les IDs manquants
+            const dataWithIds = importedData.map(entry => ({
+                ...entry,
+                id: entry.id || Utils.generateId()
+            }));
+            
+            journalEntries = [...journalEntries, ...dataWithIds];
+            filteredEntries = [...journalEntries];
+            saveJournalData();
+            renderJournal();
+            
+            Utils.showNotification(`${importedData.length} écritures importées avec succès !`, 'success');
+        }
+    } catch (error) {
+        alert('Erreur lors de l\'import: ' + error.message);
+        Utils.showNotification('Erreur lors de l\'import', 'error');
+    }
+    
+    // Reset l'input file
+    event.target.value = '';
+}

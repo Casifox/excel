@@ -1,112 +1,127 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Compte de Résultat - ComptaWeb</title>
-  <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComptaWeb - Compte de Résultat</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- Sidebar de navigation -->
-  <div id="sidebar-container"></div>
-  
-  <!-- Contenu principal -->
-  <div class="main-content">
-    <div class="page-header">
-      <h2>📉 Compte de Résultat</h2>
-      <p>Analyse des produits et charges de l'exercice</p>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>📊 ComptaWeb</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">🏠 Dashboard</a></li>
+                <li><a href="journal.html">📝 Journal</a></li>
+                <li><a href="balance.html">⚖️ Balance</a></li>
+                <li><a href="grand-livre.html">📚 Grand Livre</a></li>
+                <li><a href="resultat.html" class="active">📉 Résultat</a></li>
+                <li><a href="bilan.html">🧾 Bilan</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="resetBtn" class="btn-reset">🗑️ Réinitialiser</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <h1>Compte de Résultat</h1>
+                <p>Calcul du résultat : Produits - Charges</p>
+            </header>
+
+            <div class="bilan-section">
+                <!-- Charges (Classe 6) -->
+                <div class="bilan-column">
+                    <h3>CHARGES (Classe 6)</h3>
+                    <table id="charges-table">
+                        <thead>
+                            <tr>
+                                <th>Compte</th>
+                                <th>Libellé</th>
+                                <th class="text-right">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody id="charges-tbody">
+                            <!-- Rempli par JS -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td colspan="2" class="text-right"><strong>Total Charges</strong></td>
+                                <td class="amount-cell text-right"><strong id="total-charges">0,00 €</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Produits (Classe 7) -->
+                <div class="bilan-column">
+                    <h3>PRODUITS (Classe 7)</h3>
+                    <table id="produits-table">
+                        <thead>
+                            <tr>
+                                <th>Compte</th>
+                                <th>Libellé</th>
+                                <th class="text-right">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody id="produits-tbody">
+                            <!-- Rempli par JS -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td colspan="2" class="text-right"><strong>Total Produits</strong></td>
+                                <td class="amount-cell text-right"><strong id="total-produits">0,00 €</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Résultat Net -->
+            <div class="table-container" style="max-width: 600px; margin: 0 auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-center">RÉSULTAT DE L'EXERCICE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Total Produits</td>
+                            <td class="amount-cell positive" id="resultat-produits">0,00 €</td>
+                        </tr>
+                        <tr>
+                            <td>Total Charges</td>
+                            <td class="amount-cell negative" id="resultat-charges">0,00 €</td>
+                        </tr>
+                        <tr class="balance-row">
+                            <td><strong>RÉSULTAT NET</strong></td>
+                            <td class="amount-cell" id="resultat-net"><strong>0,00 €</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Graphique -->
+            <div class="dashboard-chart mt-3">
+                <h3>Représentation graphique</h3>
+                <canvas id="chart-resultat"></canvas>
+            </div>
+
+            <div id="empty-message" class="text-center mt-3 hidden">
+                <p style="font-size: 1.2rem; color: #7f8c8d;">📭 Aucune donnée</p>
+                <p>Veuillez saisir des écritures dans le journal pour afficher le compte de résultat.</p>
+            </div>
+        </main>
     </div>
-    
-    <!-- Résultat final -->
-    <div class="card" style="border-left: 4px solid var(--secondary-color);">
-      <div class="card-header">
-        <h3 class="card-title">Résultat de l'Exercice</h3>
-      </div>
-      <div class="text-center">
-        <div id="resultat-label" class="stat-label">RÉSULTAT</div>
-        <div id="resultat-final" class="stat-value">0 €</div>
-      </div>
-    </div>
-    
-    <!-- Graphique -->
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">Comparaison Charges / Produits</h3>
-      </div>
-      <div class="chart-container">
-        <canvas id="resultat-chart" width="600" height="300"></canvas>
-      </div>
-    </div>
-    
-    <!-- Tableau Charges / Produits -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-      <!-- Charges -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title text-danger">💸 Charges (Classe 6)</h3>
-        </div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 80px;">Compte</th>
-                <th>Nom</th>
-                <th class="text-right" style="width: 120px;">Montant</th>
-              </tr>
-            </thead>
-            <tbody id="charges-table-body">
-              <!-- Rempli dynamiquement par resultat.js -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-      
-      <!-- Produits -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title text-success">💰 Produits (Classe 7)</h3>
-        </div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 80px;">Compte</th>
-                <th>Nom</th>
-                <th class="text-right" style="width: 120px;">Montant</th>
-              </tr>
-            </thead>
-            <tbody id="produits-table-body">
-              <!-- Rempli dynamiquement par resultat.js -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Instructions -->
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">💡 À propos du Compte de Résultat</h3>
-      </div>
-      <div style="color: #7f8c8d; line-height: 1.8;">
-        <p>Le compte de résultat permet de déterminer si l'entreprise a réalisé un bénéfice ou une perte sur l'exercice.</p>
-        <p><strong>Formule de calcul :</strong></p>
-        <div style="background: var(--light-bg); padding: 15px; border-radius: 4px; margin: 10px 0; font-family: monospace; font-size: 1.1rem;">
-          RÉSULTAT = PRODUITS - CHARGES
-        </div>
-        <ul style="margin-left: 20px; margin-top: 10px;">
-          <li><strong>Si Résultat > 0</strong> : Bénéfice (l'entreprise a gagné de l'argent)</li>
-          <li><strong>Si Résultat < 0</strong> : Perte (l'entreprise a perdu de l'argent)</li>
-          <li><strong>Si Résultat = 0</strong> : Équilibre</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Scripts -->
-  <script src="js/storage.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/app.js"></script>
-  <script src="js/resultat.js"></script>
+
+    <script src="js/storage.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/resultat.js"></script>
 </body>
 </html>

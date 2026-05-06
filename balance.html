@@ -1,77 +1,69 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Balance - ComptaWeb</title>
-  <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComptaWeb - Balance Comptable</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- Sidebar de navigation -->
-  <div id="sidebar-container"></div>
-  
-  <!-- Contenu principal -->
-  <div class="main-content">
-    <div class="page-header">
-      <h2>⚖️ Balance Comptable</h2>
-      <p>Récapitulatif des soldes par compte</p>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>📊 ComptaWeb</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">🏠 Dashboard</a></li>
+                <li><a href="journal.html">📝 Journal</a></li>
+                <li><a href="balance.html" class="active">⚖️ Balance</a></li>
+                <li><a href="grand-livre.html">📚 Grand Livre</a></li>
+                <li><a href="resultat.html">📉 Résultat</a></li>
+                <li><a href="bilan.html">🧾 Bilan</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="resetBtn" class="btn-reset">🗑️ Réinitialiser</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <h1>Balance Comptable</h1>
+                <p>Récapitulatif des soldes par compte</p>
+            </header>
+
+            <div class="table-container">
+                <table id="balance-table">
+                    <thead>
+                        <tr>
+                            <th>Compte</th>
+                            <th>Libellé</th>
+                            <th class="text-right">Total Débit</th>
+                            <th class="text-right">Total Crédit</th>
+                            <th class="text-right">Solde Débiteur</th>
+                            <th class="text-right">Solde Créditeur</th>
+                        </tr>
+                    </thead>
+                    <tbody id="balance-tbody">
+                        <!-- Rempli par JS -->
+                    </tbody>
+                    <tfoot id="balance-tfoot">
+                        <!-- Totaux calculés par JS -->
+                    </tfoot>
+                </table>
+            </div>
+
+            <div id="empty-message" class="text-center mt-3 hidden">
+                <p style="font-size: 1.2rem; color: #7f8c8d;">📭 Aucune donnée</p>
+                <p>Veuillez saisir des écritures dans le journal pour afficher la balance.</p>
+            </div>
+        </main>
     </div>
-    
-    <!-- Actions -->
-    <div class="card">
-      <div class="flex-row" style="justify-content: flex-end;">
-        <button id="btn-export-csv" class="btn btn-primary">
-          📥 Exporter en CSV
-        </button>
-      </div>
-    </div>
-    
-    <!-- Tableau de la balance -->
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">Balance par Compte</h3>
-      </div>
-      
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 100px;">Compte</th>
-              <th>Nom du Compte</th>
-              <th class="text-right" style="width: 150px;">Total Débit</th>
-              <th class="text-right" style="width: 150px;">Total Crédit</th>
-              <th class="text-right" style="width: 150px;">Solde</th>
-            </tr>
-          </thead>
-          <tbody id="balance-table-body">
-            <!-- Rempli dynamiquement par balance.js -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-    
-    <!-- Instructions -->
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">💡 À propos de la Balance</h3>
-      </div>
-      <div style="color: #7f8c8d; line-height: 1.8;">
-        <p>La balance est un tableau qui récapitule tous les mouvements et soldes des comptes.</p>
-        <p><strong>Colonnes :</strong></p>
-        <ul style="margin-left: 20px;">
-          <li><strong>Débit</strong> : Total des mouvements au débit du compte</li>
-          <li><strong>Crédit</strong> : Total des mouvements au crédit du compte</li>
-          <li><strong>Solde</strong> : Différence entre le débit et le crédit (Débit - Crédit)</li>
-        </ul>
-        <p style="margin-top: 10px;"><strong>Vérification :</strong> Le total des débits doit être égal au total des crédits.</p>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Scripts -->
-  <script src="js/storage.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/app.js"></script>
-  <script src="js/balance.js"></script>
+
+    <script src="js/storage.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/balance.js"></script>
 </body>
 </html>

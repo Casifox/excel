@@ -1,205 +1,122 @@
 /**
  * ============================================
- * GRAND-LIVRE.JS - Grand Livre comptable
+ * GRANDLIVRE.JS - GESTION DU GRAND LIVRE
  * ============================================
- * Affiche toutes les écritures regroupées par compte
+ * Affichage détaillé des mouvements par compte
  */
 
 /**
- * Initialise la page du Grand Livre
+ * Initialise la page Grand Livre au chargement
  */
-function initGrandLivre() {
-  console.log('Initialisation du Grand Livre...');
-  
-  // Génère le grand livre
-  const grandLivreData = generateGrandLivre();
-  
-  // Affiche le contenu
-  renderGrandLivre(grandLivreData);
-  
-  // Configure les exportations
-  setupExportButtons();
-}
-
-/**
- * Génère le Grand Livre à partir des écritures
- * @returns {Object} - Les données du Grand Livre groupées par compte
- */
-function generateGrandLivre() {
-  // Groupe par compte
-  const grouped = Utils.groupByAccount(AppData.entries);
-  
-  // Trie par numéro de compte
-  const sortedAccounts = Object.keys(grouped).sort();
-  
-  const result = {};
-  
-  sortedAccounts.forEach(account => {
-    const accountData = grouped[account];
-    
-    // Trie les écritures par date
-    const sortedEntries = Utils.sortByDate(accountData.entries);
-    
-    result[account] = {
-      account: account,
-      name: getAccountName(account),
-      entries: sortedEntries,
-      totalDebit: accountData.debit,
-      totalCredit: accountData.credit,
-      solde: accountData.debit - accountData.credit
-    };
-  });
-  
-  return result;
-}
-
-/**
- * Récupère le nom d'un compte à partir de son numéro
- * @param {string} account - Le numéro de compte
- * @returns {string} - Le nom du compte
- */
-function getAccountName(account) {
-  const accountNames = {
-    '101000': 'Capital social',
-    '401000': 'Fournisseurs',
-    '411000': 'Clients',
-    '421000': 'Personnel - Rémunérations dues',
-    '431000': 'Sécurité sociale',
-    '445660': 'TVA déductible',
-    '445710': 'TVA collectée',
-    '512000': 'Banque',
-    '604000': 'Achats de marchandises',
-    '613000': 'Locations immobilières',
-    '622000': 'Honoraires',
-    '641000': 'Rémunérations du personnel',
-    '707000': 'Ventes de marchandises'
-  };
-  
-  return accountNames[account] || 'Compte ' + account;
-}
-
-/**
- * Affiche le Grand Livre
- * @param {Object} grandLivreData - Les données du Grand Livre
- */
-function renderGrandLivre(grandLivreData) {
-  const container = document.getElementById('grand-livre-container');
-  if (!container) return;
-  
-  let html = '';
-  
-  const accounts = Object.keys(grandLivreData);
-  
-  if (accounts.length === 0) {
-    html = `
-      <div class="card">
-        <p style="color: #7f8c8d; font-size: 1.1rem; text-align: center; padding: 40px;">
-          Aucune donnée dans le Grand Livre
-        </p>
-        <p style="color: #95a5a6; text-align: center;">
-          Ajoutez des écritures dans le journal
-        </p>
-      </div>
-    `;
-  } else {
-    accounts.forEach(account => {
-      const accountData = grandLivreData[account];
-      const soldeClass = accountData.solde >= 0 ? 'balance-positive' : 'balance-negative';
-      const soldeSign = accountData.solde >= 0 ? '' : '-';
-      
-      html += `
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">
-              Compte ${account} - ${accountData.name}
-            </h3>
-            <span class="${soldeClass}">
-              Solde: ${soldeSign}${Utils.formatCurrency(Math.abs(accountData.solde))}
-            </span>
-          </div>
-          
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Journal</th>
-                  <th>Libellé</th>
-                  <th class="text-right">Débit</th>
-                  <th class="text-right">Crédit</th>
-                </tr>
-              </thead>
-              <tbody>
-      `;
-      
-      let cumulativeBalance = 0;
-      
-      accountData.entries.forEach(entry => {
-        cumulativeBalance += entry.debit - entry.credit;
-        
-        html += `
-          <tr>
-            <td>${Utils.formatDate(entry.date)}</td>
-            <td>${entry.journal}</td>
-            <td>${entry.label}</td>
-            <td class="text-right">${entry.debit > 0 ? Utils.formatCurrency(entry.debit) : '-'}</td>
-            <td class="text-right">${entry.credit > 0 ? Utils.formatCurrency(entry.credit) : '-'}</td>
-          </tr>
-        `;
-      });
-      
-      // Totaux du compte
-      html += `
-        <tr class="total-row">
-          <td colspan="3" class="text-center"><strong>Totaux</strong></td>
-          <td class="text-right"><strong>${Utils.formatCurrency(accountData.totalDebit)}</strong></td>
-          <td class="text-right"><strong>${Utils.formatCurrency(accountData.totalCredit)}</strong></td>
-        </tr>
-      `;
-      
-      html += `
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    });
-  }
-  
-  container.innerHTML = html;
-}
-
-/**
- * Configure les boutons d'exportation
- */
-function setupExportButtons() {
-  const btnExportCSV = document.getElementById('btn-export-csv');
-  if (btnExportCSV) {
-    btnExportCSV.addEventListener('click', () => {
-      const grandLivreData = generateGrandLivre();
-      
-      let csvContent = 'Compte;Nom;Date;Journal;Libellé;Débit;Crédit\n';
-      
-      Object.values(grandLivreData).forEach(accountData => {
-        accountData.entries.forEach(entry => {
-          csvContent += `${accountData.account};${accountData.name};${entry.date};${entry.journal};"${entry.label.replace(/"/g, '""')}";${entry.debit.toFixed(2).replace('.', ',')};${entry.credit.toFixed(2).replace('.', ',')}\n`;
-        });
-      });
-      
-      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'grand_livre_compta.csv';
-      link.click();
-      URL.revokeObjectURL(url);
-    });
-  }
-}
-
-// Initialise la page quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', function() {
-  if (window.location.pathname.includes('grand-livre.html')) {
-    initGrandLivre();
-  }
+    renderGrandLivre();
 });
+
+/**
+ * Calcule et affiche le grand livre
+ */
+function renderGrandLivre() {
+    const entries = Storage.loadData();
+    const container = document.getElementById('grand-livre-container');
+    const emptyMessage = document.getElementById('empty-message');
+    
+    if (!container) return;
+    
+    // Si aucune donnée
+    if (entries.length === 0) {
+        emptyMessage?.classList.remove('hidden');
+        container.innerHTML = '';
+        return;
+    }
+    
+    emptyMessage?.classList.add('hidden');
+    
+    // Regrouper par compte
+    const accounts = {};
+    
+    entries.forEach(entry => {
+        const accountCode = entry.account.toString();
+        
+        if (!accounts[accountCode]) {
+            accounts[accountCode] = {
+                code: accountCode,
+                label: entry.label || 'Compte ' + accountCode,
+                entries: [],
+                totalDebit: 0,
+                totalCredit: 0
+            };
+        }
+        
+        accounts[accountCode].entries.push({
+            date: entry.date,
+            journal: entry.journal,
+            label: entry.label,
+            debit: parseFloat(entry.debit) || 0,
+            credit: parseFloat(entry.credit) || 0
+        });
+        
+        accounts[accountCode].totalDebit += parseFloat(entry.debit) || 0;
+        accounts[accountCode].totalCredit += parseFloat(entry.credit) || 0;
+        
+        // Mettre à jour le libellé si celui-ci est plus descriptif
+        if (entry.label && entry.label !== 'Compte ' + accountCode) {
+            accounts[accountCode].label = entry.label;
+        }
+    });
+    
+    // Trier par code compte
+    const sortedAccounts = Object.values(accounts).sort((a, b) => 
+        a.code.localeCompare(b.code)
+    );
+    
+    // Générer le HTML pour chaque compte
+    container.innerHTML = sortedAccounts.map(account => {
+        // Calculer le solde
+        const solde = account.totalDebit - account.totalCredit;
+        const soldeClass = solde >= 0 ? 'positive' : 'negative';
+        const soldeText = solde >= 0 ? 'Solde débiteur' : 'Solde créditeur';
+        
+        return `
+            <div class="account-section">
+                <div class="account-header">
+                    <h3>Compte ${account.code} - ${account.label}</h3>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Journal</th>
+                                <th>Libellé</th>
+                                <th class="text-right">Débit</th>
+                                <th class="text-right">Crédit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${account.entries.map(entry => `
+                                <tr>
+                                    <td>${entry.date}</td>
+                                    <td>${entry.journal}</td>
+                                    <td>${entry.label}</td>
+                                    <td class="amount-cell ${entry.debit > 0 ? 'positive' : ''}">${entry.debit > 0 ? Utils.formatCurrency(entry.debit) : '-'}</td>
+                                    <td class="amount-cell ${entry.credit > 0 ? 'negative' : ''}">${entry.credit > 0 ? Utils.formatCurrency(entry.credit) : '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr class="balance-row">
+                                <td colspan="3" class="text-right"><strong>Totaux</strong></td>
+                                <td class="amount-cell"><strong>${Utils.formatCurrency(account.totalDebit)}</strong></td>
+                                <td class="amount-cell"><strong>${Utils.formatCurrency(account.totalCredit)}</strong></td>
+                            </tr>
+                            <tr class="${soldeClass}">
+                                <td colspan="3" class="text-right"><strong>${soldeText}:</strong></td>
+                                <td colspan="2" class="amount-cell"><strong>${Utils.formatCurrency(Math.abs(solde))}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
