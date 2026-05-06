@@ -17,15 +17,25 @@ let AppData = {
 function initApp() {
   console.log('Initialisation de l\'application...');
   
-  // Charge les données existantes ou initialise avec des données de test
+  // Charge les données existantes
   const storedData = Storage.loadData();
   
   if (storedData && storedData.entries) {
     AppData.entries = storedData.entries;
     console.log(`${AppData.entries.length} écritures chargées`);
   } else {
-    // Première utilisation : ajoute des données de test
-    initializeTestData();
+    // Première utilisation UNIQUEMENT : ajoute des données de test
+    // Vérifie si c'est la toute première utilisation (pas de flag de reset)
+    const hasBeenInitialized = localStorage.getItem('compta_has_been_initialized');
+    
+    if (!hasBeenInitialized) {
+      initializeTestData();
+      localStorage.setItem('compta_has_been_initialized', 'true');
+    } else {
+      // Application déjà initialisée mais vide : on garde vide
+      AppData.entries = [];
+      console.log('Application vide (après reset)');
+    }
   }
   
   AppData.initialized = true;
@@ -295,7 +305,7 @@ function updateEntry(id, updates) {
 }
 
 /**
- * Réinitialise toutes les données
+ * Réinitialise toutes les données (Suppression TOTALE - Page vide)
  * Système de double-clic pour confirmation
  */
 let resetClickCount = 0;
@@ -312,7 +322,7 @@ function resetAllData() {
   
   // Si c'est le premier clic
   if (resetClickCount === 1) {
-    Utils.showAlert('⚠️ Cliquez une seconde fois pour confirmer la suppression', 'warning');
+    Utils.showAlert('⚠️ PREMIER CLIC ! Cliquez une seconde fois dans les 3 secondes pour confirmer la suppression TOTALE', 'warning');
     
     // Réinitialise le compteur après 3 secondes
     resetTimeout = setTimeout(() => {
@@ -330,12 +340,17 @@ function resetAllData() {
     resetClickCount = 0;
     
     // Confirme une dernière fois avec confirm() natif
-    if (confirm('⚠️ ATTENTION !\n\nÊtes-vous ABSOLUMENT SÛR de vouloir supprimer TOUTES les données ?\n\nCette action est IRRÉVERSIBLE et va :\n- Supprimer toutes les écritures\n- Réinitialiser la balance\n- Vider le grand livre\n\nVoulez-vous vraiment continuer ?')) {
-      Storage.resetData();
+    if (confirm('❗ CONFIRMATION FINALE ❗\n\nÊtes-vous ABSOLUMENT SÛR de vouloir TOUT EFFACER ?\n\nCette action est IRRÉVERSIBLE et va :\n- Supprimer TOUTES les écritures\n- Rendre le journal VIDE\n- Effacer la balance\n- Vider le grand livre\n- Mettre tous les soldes à ZÉRO\n\nAucune donnée de test ne sera recréée.\n\nVoulez-vous vraiment continuer ?')) {
+      // Suppression TOTALE sans recréer de données
+      localStorage.removeItem('compta_data');
+      localStorage.removeItem('compta_last_init');
+      localStorage.removeItem('compta_has_been_initialized');
+      
       AppData.entries = [];
-      initializeTestData();
-      Utils.showAlert('✅ Données réinitialisées avec succès', 'success');
-      setTimeout(() => location.reload(), 1000);
+      Storage.saveData({ entries: [] });
+      
+      Utils.showAlert('✅ DONNÉES TOTALEMENT SUPPRIMÉES - Application vide', 'success');
+      setTimeout(() => location.reload(), 1500);
     }
   }
 }
