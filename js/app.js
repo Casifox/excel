@@ -301,7 +301,6 @@ function resetAllData() {
   if (confirm('Êtes-vous sûr de vouloir supprimer toutes les données ? Cette action est irréversible.')) {
     Storage.resetData();
     AppData.entries = [];
-    initializeTestData();
     location.reload();
   }
 }
