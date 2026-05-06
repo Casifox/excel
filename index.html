@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - ComptaWeb</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Sidebar de navigation -->
+  <div id="sidebar-container"></div>
+  
+  <!-- Contenu principal -->
+  <div class="main-content">
+    <div class="page-header">
+      <h2>📈 Dashboard</h2>
+      <p>Vue d'ensemble de votre comptabilité</p>
+    </div>
+    
+    <!-- Statistiques principales -->
+    <div class="dashboard-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Écritures</div>
+        <div class="stat-value" id="stat-entries">0</div>
+      </div>
+      
+      <div class="stat-card success">
+        <div class="stat-label">Total Produits</div>
+        <div class="stat-value text-success" id="stat-produits">0 €</div>
+      </div>
+      
+      <div class="stat-card danger">
+        <div class="stat-label">Total Charges</div>
+        <div class="stat-value text-danger" id="stat-charges">0 €</div>
+      </div>
+      
+      <div class="stat-card warning">
+        <div class="stat-label">Résultat</div>
+        <div class="stat-value" id="stat-resultat">0 €</div>
+      </div>
+    </div>
+    
+    <!-- Solde bancaire -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">💰 Solde Bancaire</h3>
+      </div>
+      <div class="stat-value" id="stat-banque">0 €</div>
+      <p style="color: #7f8c8d; margin-top: 10px;">Compte 512000 - Banque</p>
+    </div>
+    
+    <!-- Dernières écritures -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">📝 Dernières Écritures</h3>
+        <a href="journal.html" class="btn btn-primary btn-sm">Voir tout</a>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Journal</th>
+              <th>Compte</th>
+              <th>Libellé</th>
+              <th class="text-right">Débit</th>
+              <th class="text-right">Crédit</th>
+            </tr>
+          </thead>
+          <tbody id="recent-entries-body">
+            <!-- Rempli dynamiquement -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Actions rapides -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">⚡ Actions Rapides</h3>
+      </div>
+      <div class="flex-row">
+        <a href="journal.html" class="btn btn-primary">
+          📝 Nouvelle Écriture
+        </a>
+        <button id="btn-export-json" class="btn btn-success">
+          💾 Exporter JSON
+        </button>
+        <button id="btn-import-json" class="btn btn-warning">
+          📂 Importer JSON
+        </button>
+        <input type="file" id="file-import" accept=".json" style="display: none;">
+        <button id="btn-reset" class="btn btn-danger">
+          🗑️ Réinitialiser
+        </button>
+      </div>
+    </div>
+    
+    <!-- Équilibre du journal -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">⚖️ Équilibre du Journal</h3>
+      </div>
+      <div id="balance-indicator" style="font-size: 1.2rem;">
+        <!-- Rempli dynamiquement -->
+      </div>
+    </div>
+  </div>
+  
+  <!-- Scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Logique spécifique au dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      // Attend que l'application soit initialisée
+      setTimeout(() => {
+        updateDashboard();
+      }, 100);
+      
+      // Bouton export JSON
+      document.getElementById('btn-export-json')?.addEventListener('click', () => {
+        Storage.exportData();
+      });
+      
+      // Bouton import JSON
+      document.getElementById('btn-import-json')?.addEventListener('click', () => {
+        document.getElementById('file-import').click();
+      });
+      
+      document.getElementById('file-import')?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          try {
+            await Storage.importData(file);
+            Utils.showAlert('Données importées avec succès');
+            setTimeout(() => location.reload(), 1000);
+          } catch (error) {
+            Utils.showAlert('Erreur lors de l\'import: ' + error.message, 'error');
+          }
+        }
+      });
+      
+      // Bouton réinitialiser
+      document.getElementById('btn-reset')?.addEventListener('click', resetAllData);
+    });
+    
+    /**
+     * Met à jour le dashboard avec les données
+     */
+    function updateDashboard() {
+      const entries = AppData.entries || [];
+      
+      // Nombre d'écritures
+      document.getElementById('stat-entries').textContent = entries.length;
+      
+      // Calcule produits et charges
+      let totalProduits = 0;
+      let totalCharges = 0;
+      
+      entries.forEach(entry => {
+        const accountClass = entry.account.charAt(0);
+        if (accountClass === '7') {
+          totalProduits += entry.credit;
+        } else if (accountClass === '6') {
+          totalCharges += entry.debit;
+        }
+      });
+      
+      document.getElementById('stat-produits').textContent = Utils.formatCurrency(totalProduits);
+      document.getElementById('stat-charges').textContent = Utils.formatCurrency(totalCharges);
+      
+      // Résultat
+      const resultat = totalProduits - totalCharges;
+      const resultatEl = document.getElementById('stat-resultat');
+      resultatEl.textContent = Utils.formatCurrency(Math.abs(resultat));
+      resultatEl.className = 'stat-value ' + (resultat >= 0 ? 'text-success' : 'text-danger');
+      
+      // Solde bancaire
+      let soldeBancaire = 0;
+      entries.forEach(entry => {
+        if (entry.account === '512000') {
+          soldeBancaire += entry.debit - entry.credit;
+        }
+      });
+      document.getElementById('stat-banque').textContent = Utils.formatCurrency(soldeBancaire);
+      
+      // Dernières écritures (5 dernières)
+      const recentEntries = [...entries]
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5);
+      
+      const recentBody = document.getElementById('recent-entries-body');
+      if (recentBody) {
+        let html = '';
+        recentEntries.forEach(entry => {
+          html += `
+            <tr>
+              <td>${Utils.formatDate(entry.date)}</td>
+              <td>${entry.journal}</td>
+              <td>${entry.account}</td>
+              <td>${entry.label}</td>
+              <td class="text-right">${entry.debit > 0 ? Utils.formatCurrency(entry.debit) : '-'}</td>
+              <td class="text-right">${entry.credit > 0 ? Utils.formatCurrency(entry.credit) : '-'}</td>
+            </tr>
+          `;
+        });
+        
+        if (html === '') {
+          html = `
+            <tr>
+              <td colspan="6" class="text-center" style="padding: 20px;">
+                <p style="color: #7f8c8d;">Aucune écriture</p>
+              </td>
+            </tr>
+          `;
+        }
+        
+        recentBody.innerHTML = html;
+      }
+      
+      // Équilibre du journal
+      const balance = Utils.checkBalance(entries);
+      const balanceIndicator = document.getElementById('balance-indicator');
+      if (balanceIndicator) {
+        if (balance.balanced) {
+          balanceIndicator.innerHTML = `
+            <span class="text-success">
+              ✓ Journal équilibré<br>
+              Débit: ${Utils.formatCurrency(balance.totalDebit)} | 
+              Crédit: ${Utils.formatCurrency(balance.totalCredit)}
+            </span>
+          `;
+        } else {
+          balanceIndicator.innerHTML = `
+            <span class="text-danger">
+              ✗ Journal déséquilibré<br>
+              Différence: ${Utils.formatCurrency(balance.difference)}
+            </span>
+          `;
+        }
+      }
+    }
+  </script>
+</body>
+</html>

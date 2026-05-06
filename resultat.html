@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compte de Résultat - ComptaWeb</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Sidebar de navigation -->
+  <div id="sidebar-container"></div>
+  
+  <!-- Contenu principal -->
+  <div class="main-content">
+    <div class="page-header">
+      <h2>📉 Compte de Résultat</h2>
+      <p>Analyse des produits et charges de l'exercice</p>
+    </div>
+    
+    <!-- Résultat final -->
+    <div class="card" style="border-left: 4px solid var(--secondary-color);">
+      <div class="card-header">
+        <h3 class="card-title">Résultat de l'Exercice</h3>
+      </div>
+      <div class="text-center">
+        <div id="resultat-label" class="stat-label">RÉSULTAT</div>
+        <div id="resultat-final" class="stat-value">0 €</div>
+      </div>
+    </div>
+    
+    <!-- Graphique -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Comparaison Charges / Produits</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="resultat-chart" width="600" height="300"></canvas>
+      </div>
+    </div>
+    
+    <!-- Tableau Charges / Produits -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+      <!-- Charges -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title text-danger">💸 Charges (Classe 6)</h3>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 80px;">Compte</th>
+                <th>Nom</th>
+                <th class="text-right" style="width: 120px;">Montant</th>
+              </tr>
+            </thead>
+            <tbody id="charges-table-body">
+              <!-- Rempli dynamiquement par resultat.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Produits -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title text-success">💰 Produits (Classe 7)</h3>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 80px;">Compte</th>
+                <th>Nom</th>
+                <th class="text-right" style="width: 120px;">Montant</th>
+              </tr>
+            </thead>
+            <tbody id="produits-table-body">
+              <!-- Rempli dynamiquement par resultat.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Instructions -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">💡 À propos du Compte de Résultat</h3>
+      </div>
+      <div style="color: #7f8c8d; line-height: 1.8;">
+        <p>Le compte de résultat permet de déterminer si l'entreprise a réalisé un bénéfice ou une perte sur l'exercice.</p>
+        <p><strong>Formule de calcul :</strong></p>
+        <div style="background: var(--light-bg); padding: 15px; border-radius: 4px; margin: 10px 0; font-family: monospace; font-size: 1.1rem;">
+          RÉSULTAT = PRODUITS - CHARGES
+        </div>
+        <ul style="margin-left: 20px; margin-top: 10px;">
+          <li><strong>Si Résultat > 0</strong> : Bénéfice (l'entreprise a gagné de l'argent)</li>
+          <li><strong>Si Résultat < 0</strong> : Perte (l'entreprise a perdu de l'argent)</li>
+          <li><strong>Si Résultat = 0</strong> : Équilibre</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/resultat.js"></script>
+</body>
+</html>
