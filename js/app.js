@@ -24,18 +24,9 @@ function initApp() {
     AppData.entries = storedData.entries;
     console.log(`${AppData.entries.length} écritures chargées`);
   } else {
-    // Première utilisation UNIQUEMENT : ajoute des données de test
-    // Vérifie si c'est la toute première utilisation (pas de flag de reset)
-    const hasBeenInitialized = localStorage.getItem('compta_has_been_initialized');
-    
-    if (!hasBeenInitialized) {
-      initializeTestData();
-      localStorage.setItem('compta_has_been_initialized', 'true');
-    } else {
-      // Application déjà initialisée mais vide : on garde vide
-      AppData.entries = [];
-      console.log('Application vide (après reset)');
-    }
+    // Aucune donnée : on garde vide (pas de données de test auto)
+    AppData.entries = [];
+    console.log('Application vide');
   }
   
   AppData.initialized = true;
@@ -341,16 +332,24 @@ function resetAllData() {
     
     // Confirme une dernière fois avec confirm() natif
     if (confirm('❗ CONFIRMATION FINALE ❗\n\nÊtes-vous ABSOLUMENT SÛR de vouloir TOUT EFFACER ?\n\nCette action est IRRÉVERSIBLE et va :\n- Supprimer TOUTES les écritures\n- Rendre le journal VIDE\n- Effacer la balance\n- Vider le grand livre\n- Mettre tous les soldes à ZÉRO\n\nAucune donnée de test ne sera recréée.\n\nVoulez-vous vraiment continuer ?')) {
-      // Suppression TOTALE sans recréer de données
+      // Suppression TOTALE de TOUS les flags et données
       localStorage.removeItem('compta_data');
       localStorage.removeItem('compta_last_init');
       localStorage.removeItem('compta_has_been_initialized');
+      localStorage.removeItem('has_been_reset');
       
+      // Vide complètement AppData
       AppData.entries = [];
+      
+      // Sauvegarde un tableau vide explicitement
       Storage.saveData({ entries: [] });
       
-      Utils.showAlert('✅ DONNÉES TOTALEMENT SUPPRIMÉES - Application vide', 'success');
-      setTimeout(() => location.reload(), 1500);
+      Utils.showAlert('✅ DONNÉES TOTALEMENT SUPPRIMÉES - Application maintenant VIDÉ', 'success');
+      
+      // Recharge la page après 1.5 seconde
+      setTimeout(() => {
+        location.reload();
+      }, 1500);
     }
   }
 }
