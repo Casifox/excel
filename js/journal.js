@@ -6,7 +6,9 @@ export function init() {
   document.getElementById("entry-date").valueAsDate = new Date();
   document.getElementById("entry-label-preset").addEventListener("change", syncEntryLabel);
   document.getElementById("entry-label-custom").addEventListener("input", syncEntryLabel);
+  document.getElementById("vat-mode").addEventListener("change", syncVatCustomRate);
   syncEntryLabel();
+  syncVatCustomRate();
   document.getElementById("new-entry").addEventListener("click", resetForm);
   document.getElementById("add-line").addEventListener("click", () => addLine());
   document.getElementById("apply-vat").addEventListener("click", applyVat);
@@ -35,17 +37,27 @@ function updateTotals() {
   try { lines = readLines(); } catch { lines = []; }
   const totals = lines.reduce((acc, line) => ({ debit: acc.debit + line.debit, credit: acc.credit + line.credit }), { debit: 0, credit: 0 });
   document.getElementById("total-debit").textContent = money(totals.debit); document.getElementById("total-credit").textContent = money(totals.credit);
-  const ok = Math.abs(totals.debit - totals.credit) < .005 && totals.debit > 0;
-  const pill = document.getElementById("balance-indicator"); pill.className = `status-pill ${ok ? "success" : "danger"}`; pill.textContent = ok ? "Prêt à enregistrer" : `Déséquilibré (${money(totals.debit - totals.credit)})`;
+  const gap = totals.debit - totals.credit;
+  const ok = Math.abs(gap) < .005 && totals.debit > 0;
+  const pill = document.getElementById("balance-indicator"); pill.className = `status-pill ${ok ? "success" : "warning"}`; pill.textContent = ok ? "Équilibré — enregistrable" : `Déséquilibré mais enregistrable (${gap >= 0 ? "+" : ""}${money(gap)})`;
   document.querySelectorAll("#entry-lines tr").forEach(row => { const account = row.querySelector(".account-input").value; row.querySelector(".account-hint").textContent = account ? `${account} — ${accountLabel(account)}` : ""; });
 }
 
 function applyVat() {
   const mode = document.getElementById("vat-mode").value;
   if (mode === "none") return toast("Choisissez un mode TVA", "error");
+  let customRate = null;
+  try {
+    customRate = mode.startsWith("custom") ? evaluateAmount(document.getElementById("vat-custom-rate").value) : null;
+  } catch (error) {
+    return toast(error.message, "error");
+  }
+  if (mode.startsWith("custom") && customRate === 0) return toast("Indiquez un taux de TVA personnalisé", "error");
   const base = readLines().find(line => line.debit || line.credit);
   if (!base) return toast("Aucune base de calcul", "error");
-  buildVatLines(base, mode).forEach(line => addLine(line));
+  const vatLines = buildVatLines(base, mode, customRate);
+  if (!vatLines.length) return toast("Taux de TVA personnalisé invalide", "error");
+  vatLines.forEach(line => addLine(line));
   updateTotals(); toast("Ligne TVA ajoutée");
 }
 
@@ -69,8 +81,13 @@ function syncEntryLabel() {
   const hiddenLabel = document.getElementById("entry-label");
   const isCustom = preset.value === "custom";
   customWrap.classList.toggle("is-hidden", !isCustom);
-  customInput.required = isCustom;
   hiddenLabel.value = isCustom ? customInput.value.trim() : preset.value;
+}
+
+function syncVatCustomRate() {
+  const mode = document.getElementById("vat-mode").value;
+  const wrap = document.getElementById("vat-custom-wrap");
+  wrap.classList.toggle("is-hidden", !mode.startsWith("custom"));
 }
 
 function renderJournal() {

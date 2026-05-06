@@ -37,11 +37,9 @@ export class JournalEntry {
   }
   isBalanced() { const totals = this.totals(); return Math.abs(totals.debit - totals.credit) < EPSILON && totals.debit > 0; }
   validate(closures = []) {
-    if (!this.date || !this.label) throw new Error("Date et libellé sont obligatoires");
-    if (this.lines.length < 2) throw new Error("Une écriture requiert au moins deux lignes");
-    if (closures.some(period => this.date >= period.start && this.date <= period.end)) throw new Error("Cette période est clôturée");
+    if (this.lines.length < 1) throw new Error("Une écriture requiert au moins une ligne");
+    if (this.date && closures.some(period => this.date >= period.start && this.date <= period.end)) throw new Error("Cette période est clôturée");
     this.lines.forEach(line => line.validate());
-    if (!this.isBalanced()) throw new Error("L'écriture n'est pas équilibrée");
     return true;
   }
 }
@@ -57,15 +55,17 @@ export class EntryLine {
   }
 }
 
-export function buildVatLines(baseLine, mode) {
-  const config = {
+export function buildVatLines(baseLine, mode, customRatePercent = null) {
+  const presets = {
     sale20: { rate: .20, account: "445710", side: "credit" }, purchase20: { rate: .20, account: "445660", side: "debit" },
     sale10: { rate: .10, account: "445710", side: "credit" }, purchase10: { rate: .10, account: "445660", side: "debit" }
-  }[mode];
-  if (!config) return [];
+  };
+  const customRate = customRatePercent === null || customRatePercent === "" ? null : Number(customRatePercent) / 100;
+  const config = presets[mode] || (mode === "customSale" && customRate !== null ? { rate: customRate, account: "445710", side: "credit" } : null) || (mode === "customPurchase" && customRate !== null ? { rate: customRate, account: "445660", side: "debit" } : null);
+  if (!config || !Number.isFinite(config.rate) || config.rate < 0) return [];
   const base = Math.max(baseLine.debit, baseLine.credit);
   const vat = roundMoney(base * config.rate);
-  return [{ account: config.account, label: `TVA ${Math.round(config.rate * 100)}%`, debit: config.side === "debit" ? vat : 0, credit: config.side === "credit" ? vat : 0 }];
+  return [{ account: config.account, label: `TVA ${roundMoney(config.rate * 100)}%`, debit: config.side === "debit" ? vat : 0, credit: config.side === "credit" ? vat : 0 }];
 }
 
 export function flattenLines(entries) { return entries.flatMap(entry => entry.lines.map(line => ({ ...line, entryId: entry.id, date: entry.date, journal: entry.journal, reference: entry.reference, entryLabel: entry.label }))); }

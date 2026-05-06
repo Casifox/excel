@@ -35,11 +35,11 @@
       </div>
       <form id="entry-form" autocomplete="off">
         <div class="form-grid journal-form-grid">
-          <label>Date<input type="date" id="entry-date" required></label>
+          <label>Date<input type="date" id="entry-date"></label>
           <label>Journal<input type="text" id="entry-code" value="OD" maxlength="8" required></label>
           <label>Référence<input type="text" id="entry-ref" placeholder="FAC-2026-001"></label>
           <label class="label-choice">Libellé
-            <select id="entry-label-preset" required>
+            <select id="entry-label-preset">
               <option value="">Choisir un libellé</option>
               <option value="Vente de prestations">Vente de prestations</option>
               <option value="Vente de marchandises">Vente de marchandises</option>
@@ -57,7 +57,7 @@
           <label class="label-custom is-hidden" id="entry-label-custom-wrap">Libellé personnalisé
             <input type="text" id="entry-label-custom" placeholder="Écrivez le libellé souhaité">
           </label>
-          <input type="hidden" id="entry-label" required>
+          <input type="hidden" id="entry-label">
           <label>TVA
             <select id="vat-mode">
               <option value="none">Aucune</option>
@@ -65,7 +65,12 @@
               <option value="purchase20">Achat 20% (44566)</option>
               <option value="sale10">Vente 10% (44571)</option>
               <option value="purchase10">Achat 10% (44566)</option>
+              <option value="customSale">Vente — TVA personnalisée</option>
+              <option value="customPurchase">Achat — TVA personnalisée</option>
             </select>
+          </label>
+          <label class="vat-custom is-hidden" id="vat-custom-wrap">Taux TVA personnalisé (%)
+            <input type="text" id="vat-custom-rate" placeholder="Ex. 5.5 ou 100/20">
           </label>
         </div>
         <datalist id="line-label-options">
