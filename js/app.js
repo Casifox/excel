@@ -17,15 +17,22 @@ let AppData = {
 function initApp() {
   console.log('Initialisation de l\'application...');
   
+  // Vérifie si l'utilisateur a fait un reset manuel
+  const manuallyReset = localStorage.getItem('compta_manually_reset') === 'true';
+  
   // Charge les données existantes ou initialise avec des données de test
   const storedData = Storage.loadData();
   
   if (storedData && storedData.entries) {
     AppData.entries = storedData.entries;
     console.log(`${AppData.entries.length} écritures chargées`);
-  } else {
+  } else if (!manuallyReset) {
     // Première utilisation : ajoute des données de test
     initializeTestData();
+  } else {
+    // Reset manuel : reste vide
+    AppData.entries = [];
+    console.log('Application réinitialisée - aucune donnée');
   }
   
   AppData.initialized = true;
@@ -301,6 +308,8 @@ function resetAllData() {
   if (confirm('Êtes-vous sûr de vouloir supprimer toutes les données ? Cette action est irréversible.')) {
     Storage.resetData();
     AppData.entries = [];
+    // Marque qu'il n'y a pas de données pour éviter de recréer les données de test
+    localStorage.setItem('compta_manually_reset', 'true');
     location.reload();
   }
 }
