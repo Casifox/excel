@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compta SaaS — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body data-page="dashboard">
+  <div id="app-shell"></div>
+  <main class="main-content">
+    <section class="page-hero">
+      <div>
+        <p class="eyebrow">Pilotage comptable</p>
+        <h1>Dashboard</h1>
+        <p class="muted">Suivez votre chiffre d'affaires, vos charges et l'équilibre de votre comptabilité en double entrée.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="journal.html" data-shortcut="Ctrl+N">Nouvelle écriture</a>
+        <button class="btn btn-secondary" id="export-snapshot">Snapshot JSON</button>
+      </div>
+    </section>
+
+    <section class="kpi-grid" id="dashboard-kpis"></section>
+
+    <section class="grid two-columns">
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <h2>Évolution mensuelle</h2>
+            <p class="muted">Produits et charges issus des comptes 7 et 6.</p>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="revenue-expense-chart"></canvas></div>
+      </article>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <h2>Répartition par classe</h2>
+            <p class="muted">Vue synthétique des mouvements débit/crédit.</p>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="class-chart"></canvas></div>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Dernières écritures</h2>
+          <p class="muted">Les cinq dernières pièces enregistrées.</p>
+        </div>
+        <a class="link" href="journal.html">Voir le journal</a>
+      </div>
+      <div id="recent-entries"></div>
+    </section>
+  </main>
+  <div id="toast-root"></div>
+</body>
+</html>

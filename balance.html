@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compta SaaS — Balance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="module" src="js/app.js"></script>
+</head>
+<body data-page="balance">
+  <div id="app-shell"></div>
+  <main class="main-content">
+    <section class="page-hero"><div><p class="eyebrow">Contrôle</p><h1>Balance générale</h1><p class="muted">Agrégation par compte avec soldes débiteurs et créditeurs.</p></div></section>
+    <section class="card"><div class="card-header"><h2>Balance</h2><button class="btn btn-secondary" id="export-balance">Exporter JSON</button></div><div id="balance-content"></div></section>
+  </main>
+  <div id="toast-root"></div>
+</body>
+</html>
